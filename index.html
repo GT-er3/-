@@ -1,13 +1,16 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="night">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>七夕青蛙的青蛙｜《孤寡》</title>
   <meta name="description" content="会眨眼、会“呱呱”说话、月亮彩蛋、点击计数与爱心特效的七夕青蛙小页面。">
   <style>
+    /* 统一用 CSS 变量管理主题；修复：把原来背景里的写死颜色也变量化 */
     :root{
+      /* 夜间默认主题 */
       --bg1:#0b132b; --bg2:#1c2541; --bg3:#3a506b;
+      --mid1:#1a2a44; --mid2:#1f3151; --mid3:#253a60; /* 原先 conic-gradient 的固定色 */
       --moon:#ffe8a3; --lantern:#ffb3a7; --lantern-deep:#ff8e7a;
       --frog:#47c97d; --frog-deep:#2fab66; --belly:#caf5d9; --cheek:#ff9fb3;
       --leaf:#2b8a3e; --leaf-deep:#1f6f31;
@@ -15,15 +18,31 @@
       --glow: 0 0 10px rgba(255,255,255,.25);
       --glass: rgba(255,255,255,.1);
       --glass-2: rgba(255,255,255,.2);
+      --star-shadow:#fff6;
     }
+    /* 日间主题：切换 data-theme="day" 即可全局生效 */
+    :root[data-theme="day"]{
+      --bg1:#e2f3ff; --bg2:#bfe2ff; --bg3:#9cc9ff;
+      --mid1:#7bb5ff; --mid2:#92c4ff; --mid3:#a6d0ff;
+      --moon:#ffe8a3; /* 可保持或调亮 */
+      --lantern:#ffc2b8; --lantern-deep:#ff9e8b;
+      --frog:#40cf7a; --frog-deep:#2aa765; --belly:#e6fff1; --cheek:#ff99ae;
+      --leaf:#2b8a3e; --leaf-deep:#1f6f31;
+      --text:#17324a;
+      --star-shadow:#fff8;
+      --glass: rgba(255,255,255,.35);
+      --glass-2: rgba(255,255,255,.45);
+    }
+
     *{box-sizing:border-box} html,body{height:100%}
     body{
       margin:0; color:#fff; font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,"PingFang SC","Noto Sans SC",sans-serif;
       background:
         radial-gradient(1400px 900px at 75% -10%, rgba(255,255,255,.08), transparent 60%),
-        conic-gradient(from 180deg at 50% -20%, #1a2a44, #1f3151, #253a60, #1f3151),
+        conic-gradient(from 180deg at 50% -20%, var(--mid1), var(--mid2), var(--mid3), var(--mid2)),
         linear-gradient(180deg, var(--bg1), var(--bg2) 55%, var(--bg3));
       overflow:hidden;
+      transition: background .35s ease;
     }
     .wrap{ position:relative; height:100%; display:grid; place-items:center; padding:24px; }
     h1{
@@ -39,11 +58,12 @@
       padding:8px 14px; border-radius:999px; backdrop-filter: blur(10px);
       background: var(--glass); border:1px solid #ffffff3a; box-shadow: 0 10px 24px rgba(0,0,0,.25);
       font-weight:700;
+      transition: background .25s ease, border-color .25s ease;
     }
     .badge{
       min-width:2.2em; text-align:center; padding:.2em .6em; border-radius:999px;
       background: var(--glass-2); border:1px solid #ffffff44; box-shadow: inset 0 0 12px rgba(255,255,255,.12);
-      transition: transform .2s ease;
+      transition: transform .2s ease, background .25s ease, border-color .25s ease;
     }
     .badge.bump{ transform: scale(1.14); }
 
@@ -55,7 +75,7 @@
       radial-gradient(1.8px 1.8px at 80% 30%, #fffc, transparent 40%),
       radial-gradient(1.2px 1.2px at 60% 15%, #fff8, transparent 40%),
       radial-gradient(1.5px 1.5px at 50% 75%, #fff6, transparent 40%);
-      filter:drop-shadow(0 0 6px #fff6); animation: twinkle 6s linear infinite;
+      filter:drop-shadow(0 0 6px var(--star-shadow)); animation: twinkle 6s linear infinite;
     }
     @keyframes twinkle{ 0%,100%{opacity:.9} 50%{opacity:.6} }
 
@@ -64,7 +84,7 @@
       position:absolute; top:40px; right:48px; width:96px; height:96px; border-radius:50%;
       background: radial-gradient(circle at 30% 35%, #fff, var(--moon) 45%, #f6d97a 70%, transparent 72%);
       box-shadow: 0 0 40px #ffd; transform:rotate(-6deg); transition: .35s ease;
-      cursor:pointer; pointer-events:auto; /* 能点击 */
+      cursor:pointer; pointer-events:auto;
     }
     .moon.heart{
       width:96px; height:86px; background: var(--heart); border-radius:12px;
@@ -127,6 +147,7 @@
       position:absolute; top:-40px; left:50%; transform:translate(-50%,-110%) scale(1);
       background: var(--bubble); color:var(--text); padding:10px 14px; border-radius:14px;
       box-shadow: 0 6px 18px rgba(0,0,0,.25); font-weight:800; letter-spacing:.08em; white-space:nowrap;
+      transition: color .25s ease, background .25s ease;
     }
     .bubble::after{
       content:""; position:absolute; left:50%; bottom:-6px; transform:translateX(-50%) rotate(45deg);
@@ -251,6 +272,11 @@
     </div>
   </div>
 
+  <!-- 音频资源（示例路径，替换为你的文件） -->
+  <audio id="audio-gugua" src="assets/gugua.mp3" preload="auto"></audio>
+  <!-- 备用轻点击音，可选 -->
+  <audio id="audio-click" src="assets/click.mp3" preload="auto"></audio>
+
   <script>
     /* ========== DOM 引用 ========== */
     const $ = s => document.querySelector(s);
@@ -263,6 +289,28 @@
     const moon = $('#moon');
     const countEl = $('#count');
     const infoEl = $('#info');
+
+    /* ========== 音频：不再使用合成，改为外部文件播放 ========== */
+    const aGuGua = $('#audio-gugua');
+    const aClick = $('#audio-click');
+
+    function playGuGua(){
+      if(!aGuGua) return;
+      try{
+        aGuGua.currentTime = 0;
+        aGuGua.play();
+      }catch(e){
+        // 某些环境下第一次交互前可能被拦截
+        console.warn('音频播放受阻，待用户交互后可正常播放。', e);
+      }
+    }
+    function playClick(){
+      if(!aClick) return;
+      try{
+        aClick.currentTime = 0;
+        aClick.play();
+      }catch(e){}
+    }
 
     /* ========== 计数与气泡 ========== */
     let clickCount = 0;
@@ -285,8 +333,8 @@
     /* ========== 爱心粒子 ========== */
     function spawnHearts(n=10){
       const rect = frog.getBoundingClientRect();
-      const baseX = rect.left + rect.width/2 - 8;
-      const baseY = rect.top + rect.height/2;
+      const baseX = rect.left + rect.width/2 - 8 + window.scrollX;
+      const baseY = rect.top + rect.height/2 + window.scrollY;
       for(let i=0;i<n;i++){
         const h = document.createElement('span');
         h.className = 'heart';
@@ -301,147 +349,13 @@
       }
     }
 
-     /* ========== WebAudio：更贴近“孤寡”的两段式人声合成 ========== */
-  let audioCtx = null;
-  function ensureAudio(){
-    if(!audioCtx){
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    /* 统一交互反馈：说话 + 爱心 + 播放音频 */
+    function interactSay(text){
+      speak(text);
+      playGuGua();
     }
-    if(audioCtx.state === 'suspended'){
-      audioCtx.resume();
-    }
-  }
 
-  // 小工具：创建一个“元音”合成器（通过两条并联带通滤波器做 F1/F2）
-  function makeVowel(when, {
-    f0Start=170, f0End=120, dur=0.22, // 基频与时长
-    F1=400, F2=900,                   // 共振峰
-    gainPeak=0.5, attack=0.02, decay=0.02, release=0.08,
-    breath=0.18                       // 气声混入
-  }){
-    const ctx = audioCtx;
-
-    // 声源：脉冲(更接近声门波) + 少量锯齿，混合更像人声
-    const oscPulse = ctx.createOscillator();
-    oscPulse.type = 'square';
-    const oscSaw = ctx.createOscillator();
-    oscSaw.type = 'sawtooth';
-
-    // 轻微颤音 LFO
-    const lfo = ctx.createOscillator();
-    lfo.type = 'sine';
-    lfo.frequency.value = 7.5;
-    const lfoGain = ctx.createGain();
-    lfoGain.gain.value = 2; // ±2Hz
-
-    // 两条并联带通 = F1/F2
-    const bp1 = ctx.createBiquadFilter();
-    bp1.type = 'bandpass'; bp1.frequency.value = F1; bp1.Q.value = 8;
-    const bp2 = ctx.createBiquadFilter();
-    bp2.type = 'bandpass'; bp2.frequency.value = F2; bp2.Q.value = 8;
-
-    // 输出增益（包络）
-    const vGain = ctx.createGain(); vGain.gain.value = 0.0001;
-
-    // 少量“气声”
-    const noise = ctx.createBufferSource();
-    const noiseBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate*dur), ctx.sampleRate);
-    const data = noiseBuf.getChannelData(0);
-    for(let i=0;i<data.length;i++){
-      // 随时间衰减，避免尾部“嘶嘶”太长
-      data[i] = (Math.random()*2 - 1) * (1 - i/data.length) * breath;
-    }
-    noise.buffer = noiseBuf;
-    const nFilter = ctx.createBiquadFilter();
-    nFilter.type = 'bandpass'; nFilter.frequency.value = (F1+F2)/2; nFilter.Q.value = 0.6;
-    const nGain = ctx.createGain(); nGain.gain.value = 0.15;
-
-    // 连接
-    oscPulse.connect(bp1); oscPulse.connect(bp2);
-    oscSaw.connect(bp1);   oscSaw.connect(bp2);
-    bp1.connect(vGain);    bp2.connect(vGain);
-    lfo.connect(lfoGain);
-    lfoGain.connect(oscPulse.frequency);
-    lfoGain.connect(oscSaw.frequency);
-    noise.connect(nFilter).connect(nGain).connect(vGain);
-    vGain.connect(ctx.destination);
-
-    // 包络
-    const t0 = when;
-    const tEnd = when + dur;
-    vGain.gain.setValueAtTime(0.0001, t0);
-    vGain.gain.exponentialRampToValueAtTime(gainPeak, t0 + attack);
-    vGain.gain.exponentialRampToValueAtTime(gainPeak*0.7, t0 + attack + decay);
-    vGain.gain.exponentialRampToValueAtTime(0.0001, tEnd + release);
-
-    // 基频滑落
-    oscPulse.frequency.setValueAtTime(f0Start, t0);
-    oscPulse.frequency.exponentialRampToValueAtTime(f0End, tEnd);
-    oscSaw.frequency.setValueAtTime(f0Start, t0);
-    oscSaw.frequency.exponentialRampToValueAtTime(f0End, tEnd);
-
-    // 启停
-    oscPulse.start(t0); oscSaw.start(t0); lfo.start(t0); noise.start(t0);
-    oscPulse.stop(tEnd + release); oscSaw.stop(tEnd + release);
-    noise.stop(tEnd); lfo.stop(tEnd + release);
-
-    return { out:vGain, stopAt: tEnd + release };
-  }
-
-  // /g/ 的瞬时爆破（高频短噪）
-  function burst(when, dur=0.045){
-    const ctx = audioCtx;
-    const src = ctx.createBufferSource();
-    const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate*dur), ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    for(let i=0;i<d.length;i++){ d[i] = (Math.random()*2 - 1) * (1 - i/d.length); }
-    src.buffer = buf;
-    const hp = ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value = 2500;
-    const g = ctx.createGain(); g.gain.value = 0.25;
-    src.connect(hp).connect(g).connect(ctx.destination);
-    src.start(when); src.stop(when + dur);
-  }
-
-  // 更像“孤寡”的两音节合成
-  function playGuGua(){
-    if(!audioCtx) return;
-    const now = audioCtx.currentTime;
-
-    // 第 1 音节：/gu/（收口，低F1、低F2，短）
-    // 近似：F1≈350Hz，F2≈900Hz；基频从 190→150Hz
-    const s1 = makeVowel(now + 0.02, {
-      f0Start:190, f0End:150, dur:0.20, F1:350, F2:900, gainPeak:0.55, breath:0.14
-    });
-
-    // 爆破音在前沿（/g/）
-    burst(now, 0.05);
-
-    // 第 2 音节：/gua/（张口，上扬再回落；F1、F2 升高）
-    // 近似：F1≈800Hz，F2≈1400Hz；基频从 210→140Hz（先略升后降）
-    // 我们用两段叠加做“上扬-下落”的感觉
-    const s2a = makeVowel(s1.stopAt - 0.08, {
-      f0Start:210, f0End:180, dur:0.14, F1:650, F2:1200, gainPeak:0.6, breath:0.16
-    });
-    const s2b = makeVowel(s2a.stopAt - 0.02, {
-      f0Start:180, f0End:140, dur:0.18, F1:800, F2:1450, gainPeak:0.62, breath:0.18
-    });
-
-    // 轻微总限幅（避免叠加过载）
-    const master = audioCtx.createGain();
-    master.gain.value = 0.9;
-    //（这里我们是直接把每个段的输出接 destination 了；
-    // 如果你想更严格，可把上面 vGain.connect(ctx.destination) 换成 connect(master)，然后 master -> destination）
-
-    // 返回大致结束时间（可用于后续节奏编排）
-    return s2b.stopAt;
-  }
-
-  // 统一交互反馈：说话 + 爱心 + 发声（调用新的 playGuGua）
-  function interactSay(text){
-    ensureAudio(); speak(text); playGuGua();
-  }
-
-    /* ========== 事件：青蛙、按钮、月亮彩蛋 ========== */
+    /* ========== 事件：青蛙、按钮、月亮彩蛋、主题切换 ========== */
     frog.addEventListener('click', () => {
       clickCount++; updateCount();
       interactSay('《孤寡》');
@@ -454,20 +368,13 @@
 
     btnHeart.addEventListener('click', () => { interactSay('比心~'); spawnHearts(18); });
 
-    // 白天/夜晚切换
+    // 修复换配色：用 data-theme 统一切换，并让所有背景层颜色都基于变量
     let night = true;
     btnTheme.addEventListener('click', () => {
       night = !night;
-      if(!night){
-        document.documentElement.style.setProperty('--bg1','#e2f3ff');
-        document.documentElement.style.setProperty('--bg2','#bfe2ff');
-        document.documentElement.style.setProperty('--bg3','#9cc9ff');
-      }else{
-        document.documentElement.style.setProperty('--bg1','#0b132b');
-        document.documentElement.style.setProperty('--bg2','#1c2541');
-        document.documentElement.style.setProperty('--bg3','#3a506b');
-      }
-      interactSay('换个氛围🎐');
+      document.documentElement.setAttribute('data-theme', night ? 'night' : 'day');
+      interactSay(night ? '回到夜色🌌' : '换个氛围🎐');
+      playClick();
     });
 
     // 月亮彩蛋：变爱心 3 秒后恢复，同时发声
@@ -477,7 +384,6 @@
       moon.classList.add('heart');
       clearTimeout(moonTimer);
       moonTimer = setTimeout(()=> moon.classList.remove('heart'), 3000);
-      // 在月亮附近撒爱心
       spawnHearts(12);
     });
 
