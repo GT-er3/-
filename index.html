@@ -4,9 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>七夕青蛙的青蛙｜《孤寡》</title>
-  <meta name="description" content="一个会眨眼、会“呱呱”说话、还能撒爱心的七夕主题青蛙小页面。" />
+  <meta name="description" content="会眨眼、会“呱呱”说话、月亮彩蛋、点击计数与爱心特效的七夕青蛙小页面。">
   <style>
-    /* ===== 基础主题变量 ===== */
     :root{
       --bg1:#0b132b; --bg2:#1c2541; --bg3:#3a506b;
       --moon:#ffe8a3; --lantern:#ffb3a7; --lantern-deep:#ff8e7a;
@@ -14,28 +13,41 @@
       --leaf:#2b8a3e; --leaf-deep:#1f6f31;
       --bubble:#ffffff; --text:#0b132b; --heart:#ff5c8a;
       --glow: 0 0 10px rgba(255,255,255,.25);
+      --glass: rgba(255,255,255,.1);
+      --glass-2: rgba(255,255,255,.2);
     }
-
-    /* ===== 全局与布局 ===== */
-    *{box-sizing:border-box}
-    html,body{height:100%}
+    *{box-sizing:border-box} html,body{height:100%}
     body{
       margin:0; color:#fff; font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,"PingFang SC","Noto Sans SC",sans-serif;
       background:
-        radial-gradient(1200px 700px at 70% -10%, rgba(255,255,255,.08), transparent 60%),
+        radial-gradient(1400px 900px at 75% -10%, rgba(255,255,255,.08), transparent 60%),
+        conic-gradient(from 180deg at 50% -20%, #1a2a44, #1f3151, #253a60, #1f3151),
         linear-gradient(180deg, var(--bg1), var(--bg2) 55%, var(--bg3));
       overflow:hidden;
     }
-    .wrap{
-      position:relative; height:100%; display:grid; place-items:center; padding:24px;
-    }
+    .wrap{ position:relative; height:100%; display:grid; place-items:center; padding:24px; }
     h1{
       position:absolute; top:16px; left:50%; transform:translateX(-50%);
-      margin:0; font-weight:800; letter-spacing:.06em; text-shadow:var(--glow);
+      margin:0; font-weight:900; letter-spacing:.06em; text-shadow:var(--glow);
       font-size:clamp(18px, 2.4vw, 28px);
     }
 
-    /* ===== 天空元素：星星、月亮、灯笼 ===== */
+    /* 顶部信息条（计数） */
+    .info{
+      position:absolute; top:60px; left:50%; transform:translateX(-50%);
+      display:flex; align-items:center; gap:12px;
+      padding:8px 14px; border-radius:999px; backdrop-filter: blur(10px);
+      background: var(--glass); border:1px solid #ffffff3a; box-shadow: 0 10px 24px rgba(0,0,0,.25);
+      font-weight:700;
+    }
+    .badge{
+      min-width:2.2em; text-align:center; padding:.2em .6em; border-radius:999px;
+      background: var(--glass-2); border:1px solid #ffffff44; box-shadow: inset 0 0 12px rgba(255,255,255,.12);
+      transition: transform .2s ease;
+    }
+    .badge.bump{ transform: scale(1.14); }
+
+    /* 天空元素：星星、月亮、灯笼 */
     .sky{position:absolute; inset:0; pointer-events:none;}
     .stars{position:absolute; inset:0; background:
       radial-gradient(2px 2px at 10% 20%, #fff8, transparent 40%),
@@ -43,18 +55,28 @@
       radial-gradient(1.8px 1.8px at 80% 30%, #fffc, transparent 40%),
       radial-gradient(1.2px 1.2px at 60% 15%, #fff8, transparent 40%),
       radial-gradient(1.5px 1.5px at 50% 75%, #fff6, transparent 40%);
-      filter:drop-shadow(0 0 6px #fff6);
-      animation: twinkle 6s linear infinite;
+      filter:drop-shadow(0 0 6px #fff6); animation: twinkle 6s linear infinite;
     }
-    @keyframes twinkle{
-      0%,100%{opacity:.9} 50%{opacity:.6}
-    }
+    @keyframes twinkle{ 0%,100%{opacity:.9} 50%{opacity:.6} }
+
+    /* 月亮：可点击，彩蛋切爱心 */
     .moon{
-      position:absolute; top:40px; right:48px; width:90px; height:90px; border-radius:50%;
+      position:absolute; top:40px; right:48px; width:96px; height:96px; border-radius:50%;
       background: radial-gradient(circle at 30% 35%, #fff, var(--moon) 45%, #f6d97a 70%, transparent 72%);
-      box-shadow: 0 0 40px #ffd;
-      transform:rotate(-8deg);
+      box-shadow: 0 0 40px #ffd; transform:rotate(-6deg); transition: .35s ease;
+      cursor:pointer; pointer-events:auto; /* 能点击 */
     }
+    .moon.heart{
+      width:96px; height:86px; background: var(--heart); border-radius:12px;
+      transform: rotate(-45deg) scale(1.05);
+      box-shadow: 0 0 30px #ff9db9, 0 0 60px #ff9db955;
+    }
+    .moon.heart::before, .moon.heart::after{
+      content:""; position:absolute; width:96px; height:96px; border-radius:50%; background: var(--heart);
+    }
+    .moon.heart::before{ left:-26px; top:-2px }
+    .moon.heart::after{ left:26px; top:-2px }
+
     .lantern{
       position:absolute; top:70px; left:48px; width:44px; height:56px; border-radius:20px;
       background: radial-gradient(ellipse at 50% 40%, #fff8, transparent 60%),
@@ -68,120 +90,91 @@
     }
     .lantern:before{ top:10px } .lantern:after{ bottom:10px }
     .lantern .line{ position:absolute; top:-40px; left:50%; width:2px; height:40px; background:#ddd; transform:translateX(-50%)}
-    @keyframes sway{
-      0%,100%{ transform:rotate(-3deg) translateY(0)} 50%{ transform:rotate(3deg) translateY(2px)}
-    }
+    @keyframes sway{ 0%,100%{ transform:rotate(-3deg) translateY(0)} 50%{ transform:rotate(3deg) translateY(2px)} }
 
-    /* ===== 场景地面与水波 ===== */
-    .pond{
-      position:absolute; bottom:-120px; left:50%; transform:translateX(-50%);
+    /* 地面与水波 */
+    .pond{ position:absolute; bottom:-120px; left:50%; transform:translateX(-50%);
       width:min(1000px, 90vw); height:420px; border-radius:50%;
-      background: radial-gradient(ellipse at 50% 30%, #2d6a9f, #1c3f62 60%, #142b45);
-      filter: blur(2px);
+      background: radial-gradient(ellipse at 50% 30%, #2d6a9f, #1c3f62 60%, #142b45); filter: blur(2px);
     }
-    .ripples{
-      position:absolute; bottom:120px; left:50%; transform:translateX(-50%);
+    .ripples{ position:absolute; bottom:120px; left:50%; transform:translateX(-50%);
       width:560px; height:120px; border-radius:50%; opacity:.35;
-      box-shadow:
-        0 0 0 2px #80caff55 inset,
-        0 0 0 18px #5fb8ff22 inset,
-        0 0 0 34px #5fb8ff11 inset;
+      box-shadow: 0 0 0 2px #80caff55 inset, 0 0 0 18px #5fb8ff22 inset, 0 0 0 34px #5fb8ff11 inset;
       animation: ripple 4s ease-in-out infinite;
     }
-    @keyframes ripple{
-      0%,100%{ transform:translateX(-50%) scaleX(1)} 50%{ transform:translateX(-50%) scaleX(1.06)}
+    @keyframes ripple{ 0%,100%{ transform:translateX(-50%) scaleX(1)} 50%{ transform:translateX(-50%) scaleX(1.06)} }
+
+    /* 爱心粒子 */
+    .hearts{ position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+    .heart{
+      position:absolute; width:16px; height:16px; transform: rotate(-45deg);
+      background: var(--heart); opacity:0; animation: floatUp 2.8s ease-out forwards;
+      box-shadow:0 0 12px #ff7aa96f;
+    }
+    .heart:before,.heart:after{
+      content:""; position:absolute; width:16px; height:16px; border-radius:50%; background: var(--heart);
+    }
+    .heart:before{ top:-8px; left:0 } .heart:after{ left:8px; top:0 }
+    @keyframes floatUp{
+      0%{ transform:translateY(0) rotate(-45deg) scale(.7); opacity:.0}
+      10%{ opacity:1 }
+      100%{ transform:translateY(-180px) rotate(-45deg) scale(1.2); opacity:0}
     }
 
-    /* ===== 爱心粒子容器 ===== */
-    .hearts{ position:absolute; inset:0; pointer-events:none; overflow:hidden; }
-
-    /* ===== 青蛙与气泡 ===== */
+    /* 舞台与对白泡泡 */
     .stage{ position:relative; display:grid; place-items:center; gap:12px; transform:translateY(10px)}
     .bubble{
       position:absolute; top:-40px; left:50%; transform:translate(-50%,-110%) scale(1);
       background: var(--bubble); color:var(--text); padding:10px 14px; border-radius:14px;
-      box-shadow: 0 6px 18px rgba(0,0,0,.25);
-      font-weight:700; letter-spacing:.08em; white-space:nowrap;
+      box-shadow: 0 6px 18px rgba(0,0,0,.25); font-weight:800; letter-spacing:.08em; white-space:nowrap;
     }
     .bubble::after{
       content:""; position:absolute; left:50%; bottom:-6px; transform:translateX(-50%) rotate(45deg);
       width:12px; height:12px; background:var(--bubble);
     }
     .bubble[data-talking="true"]{ animation: pop 260ms ease both }
-    @keyframes pop{
-      0%{ transform:translate(-50%,-110%) scale(.6); opacity:.2}
-      100%{ transform:translate(-50%,-110%) scale(1); opacity:1}
-    }
+    @keyframes pop{ 0%{ transform:translate(-50%,-110%) scale(.6); opacity:.2} 100%{ transform:translate(-50%,-110%) scale(1); opacity:1} }
 
-    /* ===== 控件 ===== */
+    /* 控件 */
     .controls{
       position:absolute; bottom:24px; left:50%; transform:translateX(-50%);
       display:flex; gap:10px; flex-wrap:wrap; justify-content:center;
     }
     .btn{
-      appearance:none; border:1px solid #ffffff44; background:#ffffff14; color:#fff;
-      padding:8px 14px; border-radius:999px; cursor:pointer; backdrop-filter:blur(6px);
-      transition:.2s ease; font-weight:600;
+      appearance:none; border:1px solid #ffffff44; background:linear-gradient(180deg,#ffffff22,#ffffff12);
+      color:#fff; padding:10px 16px; border-radius:14px; cursor:pointer; backdrop-filter:blur(6px);
+      transition:.2s ease; font-weight:700; letter-spacing:.02em; box-shadow: 0 8px 18px rgba(0,0,0,.25);
     }
     .btn:hover{ background:#ffffff26; transform:translateY(-1px) }
     .btn:active{ transform:translateY(0) scale(.98) }
 
-    /* ===== 可爱的青蛙（SVG） ===== */
+    /* SVG 青蛙 */
     svg{ display:block }
     .frog{
-      filter: drop-shadow(0 18px 24px rgba(0,0,0,.35));
-      animation: bob 3.5s ease-in-out infinite;
-      cursor:pointer;
+      filter: drop-shadow(0 18px 24px rgba(0,0,0,.35)); animation: bob 3.5s ease-in-out infinite; cursor:pointer;
     }
-    @keyframes bob{
-      0%,100%{ transform:translateY(0)} 50%{ transform:translateY(-6px)}
-    }
-    .blink > rect{
-      transform-origin: center;
-      animation: blink 6s infinite;
-    }
-    @keyframes blink{
-      0%, 47%, 49%, 100%{ transform:scaleY(0) } /* 眼皮隐藏 */
-      48% { transform:scaleY(1) }               /* 一瞬间眨眼 */
-    }
-    .talking #mouthOpen{ opacity:1 }
-    #mouthOpen{ opacity:0; transition:.15s }
-    #mouthSmile{ opacity:1 }
+    @keyframes bob{ 0%,100%{ transform:translateY(0)} 50%{ transform:translateY(-6px)} }
+    .blink > rect{ transform-origin:center; animation: blink 6s infinite; }
+    @keyframes blink{ 0%,47%,49%,100%{ transform:scaleY(0) } 48% { transform:scaleY(1) } }
+    .talking #mouthOpen{ opacity:1 } #mouthOpen{ opacity:0; transition:.15s } #mouthSmile{ opacity:1 }
 
-    /* ===== 心形样式与动画 ===== */
-    .heart{
-      position:absolute; width:14px; height:14px; transform: rotate(-45deg);
-      background: var(--heart); opacity:0; animation: floatUp 2.8s ease-out forwards;
-      box-shadow:0 0 12px #ff7aa96f;
-    }
-    .heart:before,.heart:after{
-      content:""; position:absolute; width:14px; height:14px; border-radius:50%;
-      background: var(--heart);
-    }
-    .heart:before{ top:-7px; left:0 }
-    .heart:after{ left:7px; top:0 }
-    @keyframes floatUp{
-      0%{ transform:translateY(0) rotate(-45deg) scale(.7); opacity:.0}
-      10%{ opacity:1 }
-      100%{ transform:translateY(-160px) rotate(-45deg) scale(1.2); opacity:0}
-    }
-
-    /* ===== 响应式微调 ===== */
-    @media (max-width:520px){
-      .ripples{ width:88vw }
-      .bubble{ font-size:14px }
-    }
+    @media (max-width:520px){ .ripples{ width:88vw } .bubble{ font-size:14px } }
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>🌙 七夕青蛙的青蛙 · 口吐《孤寡》</h1>
 
+    <!-- 顶部计数信息 -->
+    <div class="info" aria-live="polite" id="info">
+      🐸 点击青蛙次数：<span class="badge" id="count">0</span>
+    </div>
+
     <!-- 天空与装饰 -->
-    <div class="sky">
+    <div class="sky" aria-hidden="true">
       <div class="stars"></div>
-      <div class="moon" aria-hidden="true"></div>
-      <div class="lantern" aria-hidden="true"><span class="line"></span></div>
+      <div class="moon" id="moon" role="button" title="点我试试彩蛋～" aria-label="月亮彩蛋"></div>
+      <div class="lantern"><span class="line"></span></div>
     </div>
 
     <!-- 水面与波纹 -->
@@ -228,26 +221,19 @@
 
         <!-- 眼睛 -->
         <g id="eyes">
-          <!-- 左眼 -->
           <g transform="translate(125,98)">
             <circle r="26" fill="#e8ffe5" stroke="var(--frog-deep)" stroke-width="4"></circle>
             <circle r="10" cx="-2" cy="2" fill="#111"></circle>
-            <!-- 眼皮（眨眼） -->
-            <g class="blink">
-              <rect x="-26" y="-26" width="52" height="52" fill="var(--frog)"></rect>
-            </g>
+            <g class="blink"><rect x="-26" y="-26" width="52" height="52" fill="var(--frog)"></rect></g>
           </g>
-          <!-- 右眼 -->
           <g transform="translate(235,98)">
             <circle r="26" fill="#e8ffe5" stroke="var(--frog-deep)" stroke-width="4"></circle>
             <circle r="10" cx="2" cy="2" fill="#111"></circle>
-            <g class="blink">
-              <rect x="-26" y="-26" width="52" height="52" fill="var(--frog)"></rect>
-            </g>
+            <g class="blink"><rect x="-26" y="-26" width="52" height="52" fill="var(--frog)"></rect></g>
           </g>
         </g>
 
-        <!-- 嘴巴：微笑 + 张嘴（说话时显示） -->
+        <!-- 嘴巴 -->
         <path id="mouthSmile" d="M140 170 Q 180 190 220 170" fill="transparent" stroke="#1d3b2c" stroke-width="6" stroke-linecap="round"/>
         <ellipse id="mouthOpen" cx="180" cy="176" rx="9" ry="2" fill="#1d3b2c"/>
 
@@ -266,7 +252,7 @@
   </div>
 
   <script>
-    // ===== 小工具函数 =====
+    /* ========== DOM 引用 ========== */
     const $ = s => document.querySelector(s);
     const bubble = $('#bubble');
     const frog = $('#frog');
@@ -274,26 +260,33 @@
     const btnTalk = $('#btn-talk');
     const btnHeart = $('#btn-heart');
     const btnTheme = $('#btn-theme');
+    const moon = $('#moon');
+    const countEl = $('#count');
+    const infoEl = $('#info');
 
-    // 让气泡显示文本并做轻微弹出
+    /* ========== 计数与气泡 ========== */
+    let clickCount = 0;
+    function updateCount(){
+      countEl.textContent = String(clickCount);
+      countEl.classList.add('bump');
+      setTimeout(()=>countEl.classList.remove('bump'), 220);
+    }
     function speak(text="《孤寡》"){
       bubble.textContent = text;
       bubble.dataset.talking = "true";
       frog.classList.add('talking');
       setTimeout(()=>{ bubble.dataset.talking = "false"; frog.classList.remove('talking'); }, 420);
-      // 模拟张嘴动作
       const mouth = document.getElementById('mouthOpen');
       mouth.style.opacity = 1;
       setTimeout(()=> mouth.style.opacity = 0, 320);
       spawnHearts(3);
     }
 
-    // 生成爱心粒子
+    /* ========== 爱心粒子 ========== */
     function spawnHearts(n=10){
       const rect = frog.getBoundingClientRect();
-      const baseX = rect.left + rect.width/2 - 7;
+      const baseX = rect.left + rect.width/2 - 8;
       const baseY = rect.top + rect.height/2;
-
       for(let i=0;i<n;i++){
         const h = document.createElement('span');
         h.className = 'heart';
@@ -303,24 +296,91 @@
         h.style.left = left + 'px';
         h.style.top = top + 'px';
         h.style.animationDelay = delay + 's';
-        h.style.opacity = 0;
         hearts.appendChild(h);
-        // 清理
         setTimeout(()=> h.remove(), 3500);
       }
     }
 
-    // 点击青蛙也会说话
-    frog.addEventListener('click', () => speak('《孤寡》'));
+    /* ========== WebAudio：青蛙“呱呱”合成音 ========== */
+    let audioCtx = null;
+    function ensureAudio(){
+      if(!audioCtx){
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if(audioCtx.state === 'suspended'){
+        audioCtx.resume();
+      }
+    }
+    function playCroak(){
+      if(!audioCtx) return;
 
-    // 按钮交互
+      // 主振荡器（锯齿），模拟低沉呱声
+      const osc = audioCtx.createOscillator();
+      osc.type = 'sawtooth';
+      const gain = audioCtx.createGain();
+      const lpf = audioCtx.createBiquadFilter();
+      lpf.type = 'lowpass'; lpf.frequency.value = 800;
+
+      // 轻微抖动的 LFO 作用在增益上，增加“呱呱”颤动感
+      const lfo = audioCtx.createOscillator();
+      const lfoGain = audioCtx.createGain();
+      lfo.type = 'sine'; lfo.frequency.value = 22; // 颤动频率
+      lfoGain.gain.value = 0.12;
+
+      lfo.connect(lfoGain).connect(gain.gain);
+
+      osc.connect(lpf).connect(gain).connect(audioCtx.destination);
+
+      const now = audioCtx.currentTime;
+
+      // 频率从 180Hz → 120Hz 滑落（呱~）
+      osc.frequency.setValueAtTime(180, now);
+      osc.frequency.exponentialRampToValueAtTime(120, now + 0.26);
+
+      // 包络：快起、短释
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.5, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
+
+      // 轻微“气声”噪音叠加
+      const noise = audioCtx.createBufferSource();
+      const buffer = audioCtx.createBuffer(1, 22050, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for(let i=0; i<data.length; i++){ data[i] = (Math.random()*2 - 1) * (1 - i/data.length) * 0.35; }
+      noise.buffer = buffer;
+      const noiseGain = audioCtx.createGain();
+      noiseGain.gain.value = 0.15;
+      const noiseFilter = audioCtx.createBiquadFilter();
+      noiseFilter.type = 'bandpass'; noiseFilter.frequency.value = 600; noiseFilter.Q.value = 0.7;
+      noise.connect(noiseFilter).connect(noiseGain).connect(audioCtx.destination);
+
+      osc.start(now);
+      lfo.start(now);
+      noise.start(now);
+      osc.stop(now + 0.34);
+      noise.stop(now + 0.34);
+      lfo.stop(now + 0.34);
+    }
+
+    // 统一“交互反馈”：说话 + 爱心 + 发声
+    function interactSay(text){
+      ensureAudio(); speak(text); playCroak();
+    }
+
+    /* ========== 事件：青蛙、按钮、月亮彩蛋 ========== */
+    frog.addEventListener('click', () => {
+      clickCount++; updateCount();
+      interactSay('《孤寡》');
+    });
+
     btnTalk.addEventListener('click', () => {
       const lines = ['《孤寡》','呱~','孤寡孤寡~','七夕快……孤寡！','呱呱～'];
-      speak(lines[Math.floor(Math.random()*lines.length)]);
+      interactSay(lines[Math.floor(Math.random()*lines.length)]);
     });
-    btnHeart.addEventListener('click', () => spawnHearts(18));
 
-    // 简单换配色：白天/夜晚切换
+    btnHeart.addEventListener('click', () => { interactSay('比心~'); spawnHearts(18); });
+
+    // 白天/夜晚切换
     let night = true;
     btnTheme.addEventListener('click', () => {
       night = !night;
@@ -328,19 +388,26 @@
         document.documentElement.style.setProperty('--bg1','#e2f3ff');
         document.documentElement.style.setProperty('--bg2','#bfe2ff');
         document.documentElement.style.setProperty('--bg3','#9cc9ff');
-        document.querySelector('.moon').style.opacity = .6;
-        document.querySelector('.lantern').style.opacity = .8;
       }else{
         document.documentElement.style.setProperty('--bg1','#0b132b');
         document.documentElement.style.setProperty('--bg2','#1c2541');
         document.documentElement.style.setProperty('--bg3','#3a506b');
-        document.querySelector('.moon').style.opacity = 1;
-        document.querySelector('.lantern').style.opacity = 1;
       }
-      speak('换个氛围🎐');
+      interactSay('换个氛围🎐');
     });
 
-    // 初始小彩蛋
+    // 月亮彩蛋：变爱心 3 秒后恢复，同时发声
+    let moonTimer = null;
+    moon.addEventListener('click', () => {
+      interactSay('月亮变心❤️');
+      moon.classList.add('heart');
+      clearTimeout(moonTimer);
+      moonTimer = setTimeout(()=> moon.classList.remove('heart'), 3000);
+      // 在月亮附近撒爱心
+      spawnHearts(12);
+    });
+
+    // 初始化小彩蛋
     setTimeout(()=> spawnHearts(10), 600);
   </script>
 </body>
