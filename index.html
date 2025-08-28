@@ -301,71 +301,145 @@
       }
     }
 
-    /* ========== WebAudio：青蛙“呱呱”合成音 ========== */
-    let audioCtx = null;
-    function ensureAudio(){
-      if(!audioCtx){
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if(audioCtx.state === 'suspended'){
-        audioCtx.resume();
-      }
+     /* ========== WebAudio：更贴近“孤寡”的两段式人声合成 ========== */
+  let audioCtx = null;
+  function ensureAudio(){
+    if(!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
-    function playCroak(){
-      if(!audioCtx) return;
-
-      // 主振荡器（锯齿），模拟低沉呱声
-      const osc = audioCtx.createOscillator();
-      osc.type = 'sawtooth';
-      const gain = audioCtx.createGain();
-      const lpf = audioCtx.createBiquadFilter();
-      lpf.type = 'lowpass'; lpf.frequency.value = 800;
-
-      // 轻微抖动的 LFO 作用在增益上，增加“呱呱”颤动感
-      const lfo = audioCtx.createOscillator();
-      const lfoGain = audioCtx.createGain();
-      lfo.type = 'sine'; lfo.frequency.value = 22; // 颤动频率
-      lfoGain.gain.value = 0.12;
-
-      lfo.connect(lfoGain).connect(gain.gain);
-
-      osc.connect(lpf).connect(gain).connect(audioCtx.destination);
-
-      const now = audioCtx.currentTime;
-
-      // 频率从 180Hz → 120Hz 滑落（呱~）
-      osc.frequency.setValueAtTime(180, now);
-      osc.frequency.exponentialRampToValueAtTime(120, now + 0.26);
-
-      // 包络：快起、短释
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(0.5, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
-
-      // 轻微“气声”噪音叠加
-      const noise = audioCtx.createBufferSource();
-      const buffer = audioCtx.createBuffer(1, 22050, audioCtx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for(let i=0; i<data.length; i++){ data[i] = (Math.random()*2 - 1) * (1 - i/data.length) * 0.35; }
-      noise.buffer = buffer;
-      const noiseGain = audioCtx.createGain();
-      noiseGain.gain.value = 0.15;
-      const noiseFilter = audioCtx.createBiquadFilter();
-      noiseFilter.type = 'bandpass'; noiseFilter.frequency.value = 600; noiseFilter.Q.value = 0.7;
-      noise.connect(noiseFilter).connect(noiseGain).connect(audioCtx.destination);
-
-      osc.start(now);
-      lfo.start(now);
-      noise.start(now);
-      osc.stop(now + 0.34);
-      noise.stop(now + 0.34);
-      lfo.stop(now + 0.34);
+    if(audioCtx.state === 'suspended'){
+      audioCtx.resume();
     }
+  }
 
-    // 统一“交互反馈”：说话 + 爱心 + 发声
-    function interactSay(text){
-      ensureAudio(); speak(text); playCroak();
+  // 小工具：创建一个“元音”合成器（通过两条并联带通滤波器做 F1/F2）
+  function makeVowel(when, {
+    f0Start=170, f0End=120, dur=0.22, // 基频与时长
+    F1=400, F2=900,                   // 共振峰
+    gainPeak=0.5, attack=0.02, decay=0.02, release=0.08,
+    breath=0.18                       // 气声混入
+  }){
+    const ctx = audioCtx;
+
+    // 声源：脉冲(更接近声门波) + 少量锯齿，混合更像人声
+    const oscPulse = ctx.createOscillator();
+    oscPulse.type = 'square';
+    const oscSaw = ctx.createOscillator();
+    oscSaw.type = 'sawtooth';
+
+    // 轻微颤音 LFO
+    const lfo = ctx.createOscillator();
+    lfo.type = 'sine';
+    lfo.frequency.value = 7.5;
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.value = 2; // ±2Hz
+
+    // 两条并联带通 = F1/F2
+    const bp1 = ctx.createBiquadFilter();
+    bp1.type = 'bandpass'; bp1.frequency.value = F1; bp1.Q.value = 8;
+    const bp2 = ctx.createBiquadFilter();
+    bp2.type = 'bandpass'; bp2.frequency.value = F2; bp2.Q.value = 8;
+
+    // 输出增益（包络）
+    const vGain = ctx.createGain(); vGain.gain.value = 0.0001;
+
+    // 少量“气声”
+    const noise = ctx.createBufferSource();
+    const noiseBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate*dur), ctx.sampleRate);
+    const data = noiseBuf.getChannelData(0);
+    for(let i=0;i<data.length;i++){
+      // 随时间衰减，避免尾部“嘶嘶”太长
+      data[i] = (Math.random()*2 - 1) * (1 - i/data.length) * breath;
     }
+    noise.buffer = noiseBuf;
+    const nFilter = ctx.createBiquadFilter();
+    nFilter.type = 'bandpass'; nFilter.frequency.value = (F1+F2)/2; nFilter.Q.value = 0.6;
+    const nGain = ctx.createGain(); nGain.gain.value = 0.15;
+
+    // 连接
+    oscPulse.connect(bp1); oscPulse.connect(bp2);
+    oscSaw.connect(bp1);   oscSaw.connect(bp2);
+    bp1.connect(vGain);    bp2.connect(vGain);
+    lfo.connect(lfoGain);
+    lfoGain.connect(oscPulse.frequency);
+    lfoGain.connect(oscSaw.frequency);
+    noise.connect(nFilter).connect(nGain).connect(vGain);
+    vGain.connect(ctx.destination);
+
+    // 包络
+    const t0 = when;
+    const tEnd = when + dur;
+    vGain.gain.setValueAtTime(0.0001, t0);
+    vGain.gain.exponentialRampToValueAtTime(gainPeak, t0 + attack);
+    vGain.gain.exponentialRampToValueAtTime(gainPeak*0.7, t0 + attack + decay);
+    vGain.gain.exponentialRampToValueAtTime(0.0001, tEnd + release);
+
+    // 基频滑落
+    oscPulse.frequency.setValueAtTime(f0Start, t0);
+    oscPulse.frequency.exponentialRampToValueAtTime(f0End, tEnd);
+    oscSaw.frequency.setValueAtTime(f0Start, t0);
+    oscSaw.frequency.exponentialRampToValueAtTime(f0End, tEnd);
+
+    // 启停
+    oscPulse.start(t0); oscSaw.start(t0); lfo.start(t0); noise.start(t0);
+    oscPulse.stop(tEnd + release); oscSaw.stop(tEnd + release);
+    noise.stop(tEnd); lfo.stop(tEnd + release);
+
+    return { out:vGain, stopAt: tEnd + release };
+  }
+
+  // /g/ 的瞬时爆破（高频短噪）
+  function burst(when, dur=0.045){
+    const ctx = audioCtx;
+    const src = ctx.createBufferSource();
+    const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate*dur), ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i=0;i<d.length;i++){ d[i] = (Math.random()*2 - 1) * (1 - i/d.length); }
+    src.buffer = buf;
+    const hp = ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value = 2500;
+    const g = ctx.createGain(); g.gain.value = 0.25;
+    src.connect(hp).connect(g).connect(ctx.destination);
+    src.start(when); src.stop(when + dur);
+  }
+
+  // 更像“孤寡”的两音节合成
+  function playGuGua(){
+    if(!audioCtx) return;
+    const now = audioCtx.currentTime;
+
+    // 第 1 音节：/gu/（收口，低F1、低F2，短）
+    // 近似：F1≈350Hz，F2≈900Hz；基频从 190→150Hz
+    const s1 = makeVowel(now + 0.02, {
+      f0Start:190, f0End:150, dur:0.20, F1:350, F2:900, gainPeak:0.55, breath:0.14
+    });
+
+    // 爆破音在前沿（/g/）
+    burst(now, 0.05);
+
+    // 第 2 音节：/gua/（张口，上扬再回落；F1、F2 升高）
+    // 近似：F1≈800Hz，F2≈1400Hz；基频从 210→140Hz（先略升后降）
+    // 我们用两段叠加做“上扬-下落”的感觉
+    const s2a = makeVowel(s1.stopAt - 0.08, {
+      f0Start:210, f0End:180, dur:0.14, F1:650, F2:1200, gainPeak:0.6, breath:0.16
+    });
+    const s2b = makeVowel(s2a.stopAt - 0.02, {
+      f0Start:180, f0End:140, dur:0.18, F1:800, F2:1450, gainPeak:0.62, breath:0.18
+    });
+
+    // 轻微总限幅（避免叠加过载）
+    const master = audioCtx.createGain();
+    master.gain.value = 0.9;
+    //（这里我们是直接把每个段的输出接 destination 了；
+    // 如果你想更严格，可把上面 vGain.connect(ctx.destination) 换成 connect(master)，然后 master -> destination）
+
+    // 返回大致结束时间（可用于后续节奏编排）
+    return s2b.stopAt;
+  }
+
+  // 统一交互反馈：说话 + 爱心 + 发声（调用新的 playGuGua）
+  function interactSay(text){
+    ensureAudio(); speak(text); playGuGua();
+  }
 
     /* ========== 事件：青蛙、按钮、月亮彩蛋 ========== */
     frog.addEventListener('click', () => {
